@@ -58,6 +58,31 @@ def get_vector_representations(encoder_model, dataloader, device='cpu'):
         }
 
 
+@torch.no_grad()
+def get_image_vector_representations(encoder_model, dataloader, device='cpu', noise_std=0.2):
+    encoder_model.eval()
+    x = []
+    x1 = []
+    y = []
+    for images, labels in dataloader:
+        images = images.to(device)
+        noisy_images = torch.clamp(images + noise_std * torch.randn_like(images), 0.0, 1.0)
+        feat = encoder_model(images)
+        feat_noisy = encoder_model(noisy_images)
+        x.append(feat.detach().cpu())
+        x1.append(feat_noisy.detach().cpu())
+        y.append(labels.cpu())
+
+    x = torch.cat(x, dim=0)
+    x1 = torch.cat(x1, dim=0)
+    y = torch.cat(y, dim=0)
+    return {
+        'x': x,
+        'x1': x1,
+        'y': y,
+    }
+
+
 
 
 

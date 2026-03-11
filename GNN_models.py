@@ -153,4 +153,31 @@ class GraphPotts(nn.Module):
             #     z[labeled_data[0,:]] = F.one_hot(labeled_data[1,:], self.nc).float()
 
         return z
+
+
+class ImageEncoder(nn.Module):
+    def __init__(self, input_channels=1, hidden_dim=32):
+        super(ImageEncoder, self).__init__()
+        out_dim = hidden_dim * 2
+        self.features = nn.Sequential(
+            nn.Conv2d(input_channels, hidden_dim, kernel_size=3, padding=1),
+            nn.BatchNorm2d(hidden_dim),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2),
+            nn.Conv2d(hidden_dim, hidden_dim * 2, kernel_size=3, padding=1),
+            nn.BatchNorm2d(hidden_dim * 2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2),
+            nn.Conv2d(hidden_dim * 2, out_dim, kernel_size=3, padding=1),
+            nn.BatchNorm2d(out_dim),
+            nn.ReLU(inplace=True),
+        )
+        self.pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.output_dim = out_dim
+
+    def forward(self, x):
+        h = self.features(x)
+        h = self.pool(h)
+        h = torch.flatten(h, 1)
+        return h
     
